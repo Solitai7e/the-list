@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+
+<title>The List</title>
+<style>
+  * {
+    font-size: 12px;
+    font-family: monospace;
+  }
+
+  table {
+    border-collapse: collapse;
+    margin-bottom: 1em;
+  }
+  th, td {
+    padding: 0.2rem;
+    border:  1px solid black;
+  }
+  th {
+    background-color: lightgray;
+    cursor: pointer;
+  }
+  tr:hover {
+    background-color: aqua;
+  }
+  tr.selected {
+    background-color: yellow;
+  }
+
+  #output {
+    padding: 0 5px 20px;
+  }
+
+  #actions {
+    position: fixed;
+    bottom: 0;
+    width: calc(100% - 24px);
+    background: white;
+    border-top: 1px solid #9a9a9a;
+    padding: 6px 4px;
+  }
+</style>
+
+<pre>
+             Silhouetted & Cloaked Characters
+ _______ _______ _______      _____   _______ _______ _______
+|_     _|   |   |    ___|    |     |_|_     _|     __|_     _|
+  |   | |       |    ___|    |       |_|   |_|__     | |   |
+  |___| |___|___|_______|    |_______|_______|_______| |___|
+
+                  I N T E R A C T I V E
+</pre>
+<hr/>
+<div id="output" style="display: none">
+  Media: <span id="media-count"></span>
+  Characters: <span id="char-count"></span>
+  <br/><br/>
+  <table>
+    <thead><tr>
+      <th onclick="sortByColumn(0)">MEDIA</th>
+      <th onclick="sortByColumn(1)">CHARACTER</th>
+    </tr></thead>
+  </table>
+</div>
+<div id="actions">
+  <button onclick="load()" style="text-align: right">Load</button>
+  <button onclick="reset()" style="text-align: right">Reset</button>
+  <button onclick="roll()" style="text-align: right">Roll</button>
+</div>
+
+<script>
+  const $output = document.getElementById("output");
+  const $tbody = $output.querySelector("table").createTBody();
+  const $mediaCount = document.getElementById("media-count");
+  const $charCount = document.getElementById("char-count");
+  let mediaToChars = [];
+  let sortingColumn = 0;
+
+  $tbody.addEventListener("click", event => {
+    const $row = event.target.closest("tr");
+    if (!$row) return;
+    select($row);
+    event.stopPropagation();
+  });
+
+  function sortBy(array, key) {
+    array.sort((x, y) => {
+      const keyX = key(x), keyY = key(y);
+      return keyX > keyY ? 1 : keyX < keyY ? -1 : 0;
+    });
+  }
+  function randomInt(max, min = 0) {
+    return Math.floor(Math.random() * (max - min) + min);
+  }
+  function randomItem(arrayLike) {
+    return arrayLike[randomInt(arrayLike.length)];
+  }
+  function load() {
+    const input = prompt("paste the whole list here and click ok thx");
+    if (!input) return;
+
+    reset();
+
+    let mediaCount = 0;
+    for (const [, match] of input.matchAll(/^\*\s+([^*]+)/gm)) {
+      const segments = match.split(/\t+/);
+      const media = segments[0]?.trim();
+      const chars = segments.slice(1).join(" ").split(/\s*\/\s*/);
+
+      const charsToRows = chars.map(char => {
+        const $media = document.createElement("td");
+        $media.textContent = media;
+
+        const $char = document.createElement("td");
+        $char.textContent = char;
+
+        const $row = document.createElement("tr");
+        $row.append($media, $char);
+
+        $tbody.append($row);
+        return [char, $row];
+      });
+      mediaToChars.push([media, charsToRows]);
+
+      mediaCount++;
+    }
+
+    $mediaCount.textContent = mediaCount;
+    $charCount.textContent = $tbody.children.length;
+    $output.style.display = "";
+  }
+  function reset() {
+    mediaToChars = [];
+    sortingColumn = 0;
+    $tbody.innerHTML = "";
+    $output.style.display = "none";
+  }
+  function sortByColumn(n) {
+    const children = [...$tbody.children];
+    if (sortingColumn !== n) {
+      sortingColumn = n;
+      sortBy(children, x => x.children[n].textContent);
+    } else {
+      children.reverse();
+    }
+    $tbody.innerHTML = "";
+    $tbody.append(...children);
+  }
+  function select($row) {
+    if (!$row.classList.contains("selected")) {
+      $tbody.querySelector(".selected")?.classList.remove("selected");
+      $row.classList.add("selected");
+    } else {
+      $row.classList.remove("selected");
+    }
+  }
+  function roll() {
+    if (mediaToChars.length === 0)
+      return;
+    const [media, chars] = randomItem(mediaToChars);
+    const [char, $row] = randomItem(chars);
+    select($row);
+    $row.scrollIntoView({block: "center", behavior: "smooth"});
+  }
+</script>
