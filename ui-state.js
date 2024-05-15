@@ -17,7 +17,7 @@ class UiState {
     UIDom.setMediaCount(media.length);
     UIDom.setCharCount(charCount);
     UIDom.showOutput();
-  
+
     return new Loaded(media);
   }
 }
@@ -49,7 +49,7 @@ export class Loaded extends UiState {
     const $row = randomItem(UIDom.getRowsByMedia(media));
     UIDom.selectRow($row);
     UIDom.scrollToRow($row);
-  
+
     return this;
   }
   reset() {
@@ -63,13 +63,7 @@ function sortingFuncFor(column) {
   switch (column) {
     case 0: case 1:
       return $cell => $cell.textContent;
-    case 2: case 5: case 6:
+    case 2: case 3: case 4: case 5: case 6:
       return $cell => attributeValueToInt($cell.children[0]);
-    case 3: case 4:
-      return (_, $row) => {
-        const light = attributeValueToInt($row.cells[3].children[0]);
-        const dark = attributeValueToInt($row.cells[4].children[0]);
-        return `${light},${dark}`;
-      };
   }
 }
